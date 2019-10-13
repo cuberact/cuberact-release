@@ -145,10 +145,10 @@
                                         <unzip src="${project.basedir}/target/${release.project}.jar"
                                                dest="${project.basedir}/target/${release.project}-unzipped"/>
                                         <delete file="${project.basedir}/target/${release.project}.jar"/>
-                                        <copy todir="${project.basedir}/target/${release.project}-unzipped/META-INF/services" overwrite="true">
+                                        <copy todir="${project.basedir}/target/${release.project}-unzipped/META-INF/services" overwrite="true" failonerror="false">
                                             <fileset dir="${project.basedir}/src/main/resources/META-INF/services"/>
                                         </copy>
-                                        <delete dir="${project.basedir}/target/${release.project}-unzipped/META-INF/maven"/>
+                                        <delete dir="${project.basedir}/target/${release.project}-unzipped/META-INF/maven" failonerror="false"/>
                                         <zip destfile="${project.basedir}/target/${release.project}.jar">
                                             <fileset dir="${project.basedir}/target/${release.project}-unzipped"/>
                                         </zip>
