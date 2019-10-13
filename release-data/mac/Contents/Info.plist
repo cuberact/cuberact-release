@@ -11,7 +11,7 @@
   <key>CFBundleName</key>
   <string>#release.name#</string>
   <key>CFBundleIconFile</key>
-  <string>icons.icns</string>
+  <string>icon.icns</string>
   <key>CFBundleVersion</key>
    <string>#release.version#</string>
   <key>CFBundleShortVersionString</key>

@@ -27,7 +27,7 @@
         <release.version.resource>version.txt</release.version.resource>
         <release.proguard.config>proguard.conf</release.proguard.config>
 
-        <release.path.windows.project.launcher>OVERRIDE PROPERTY release.path.windows.project.launcher</release.path.windows.project.launcher>
+        <release.path.windows.project.exe>OVERRIDE PROPERTY release.path.windows.project.exe</release.path.windows.project.exe>
         <release.path.mac.icon>OVERRIDE PROPERTY release.path.mac.icon</release.path.mac.icon>
         <release.path.linux.icon>OVERRIDE PROPERTY release.path.linux.icon</release.path.linux.icon>
         <release.class>OVERRIDE PROPERTY release.class</release.class>
@@ -175,9 +175,9 @@
                                             <replacefilter token="#release.class#" value="${release.class}"/>
                                         </replace>
                                         <copy overwrite="true" failonerror="false"
-                                              file="${release.path.windows.project.launcher}/project.launcher"
+                                              file="${release.path.windows.project.exe}/project.exe"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
-                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/project.launcher"
+                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/project.exe"
                                               tofile="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/${release.project}.exe"/>
                                         <copy file="${project.basedir}/target/${release.project}.jar"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
