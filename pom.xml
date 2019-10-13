@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.cuberact</groupId>
+        <artifactId>cuberact-parent</artifactId>
+        <version>1.0.2</version>
+        <relativePath>../cuberact-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>cuberact-release</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>cuberact-release</name>
+    <description>parent pom for releasable projects - maven profile release</description>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>version.txt</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>version.txt</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+    <properties>
+        <release.jar>${project.artifactId}.jar</release.jar>
+        <release.copyright>${project.name} - ${project.description} - ${project.organization.name}</release.copyright>
+        <release.ios.category>public.app-category.developer-tools</release.ios.category>
+
+        <!-- must be overridden by child pom -->
+        <release.class>org.release.Launcher</release.class>
+        <release.package>org.release</release.package>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.wvengen</groupId>
+                        <artifactId>proguard-maven-plugin</artifactId>
+                        <version>2.1.1</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>net.sf.proguard</groupId>
+                                <artifactId>proguard-base</artifactId>
+                                <version>6.1.1</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>proguard</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <proguardVersion>6.1.1</proguardVersion>
+                            <proguardInclude>proguard.conf</proguardInclude>
+                            <mappingFileName>${project.artifactId}-v${project.version}.proguard</mappingFileName>
+                            <libs>
+                                <lib>${project.basedir}/release/proguard-jre/jre/lib/rt.jar</lib>
+                                <lib>${project.basedir}/release/proguard-jre/jre/lib/jce.jar</lib>
+                                <lib>${project.basedir}/release/proguard-jre/jre/lib/jsse.jar</lib>
+                            </libs>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.6</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>${release.class}</mainClass>
+                                </manifest>
+                            </archive>
+                            <finalName>${project.artifactId}</finalName>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <id>proguard-jre-preparation</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <!-- proguard -->
+                                        <unzip src="${project.parent.relativePath}/../release-data/linux/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/proguard-jre"
+                                        />
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>zip-releases</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+
+                                        <!-- meta-inf services from project -->
+                                        <echo>META-INF SERVICES:${line.separator}</echo>
+                                        <unzip src="${project.basedir}/target/${project.artifactId}.jar"
+                                               dest="${project.basedir}/target/${project.artifactId}-unzipped"
+                                        />
+                                        <delete file="${project.basedir}/target/${project.artifactId}.jar"/>
+                                        <!--delete>
+                                            <fileset dir="${project.basedir}/target/${project.artifactId}-unzipped/META-INF/services">
+                                                <include name="**/*"/>
+                                            </fileset>
+                                        </delete-->
+                                        <copy todir="${project.basedir}/target/${project.artifactId}-unzipped/META-INF/services" overwrite="true">
+                                            <fileset dir="${project.basedir}/src/main/resources/META-INF/services"/>
+                                        </copy>
+                                        <zip destfile="${project.basedir}/target/${project.artifactId}.jar">
+                                            <fileset dir="${project.basedir}/target/${project.artifactId}-unzipped"/>
+                                        </zip>
+
+                                        <!-- proguard mapping file -->
+                                        <echo>PROGUARD MAPPING FILE:${line.separator}</echo>
+                                        <copy file="${project.basedir}/target/${project.artifactId}-v${project.version}.proguard"
+                                              todir="${project.basedir}/proguard"
+                                        />
+                                        <delete dir="${project.basedir}/release/proguard-jre"/>
+
+                                        <!-- windows -->
+                                        <echo>WINDOWS RELEASE:${line.separator}</echo>
+                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}" filtering="false">
+                                            <fileset dir="${project.parent.relativePath}/../release-data/windows">
+                                                <exclude name="*.zip"/>
+                                            </fileset>
+                                        </copy>
+                                        <replace file="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/config.json">
+                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
+                                            <replacefilter token="#release.class#" value="${release.class}"/>
+                                        </replace>
+                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/project.launcher"
+                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/${project.artifactId}.exe"
+                                              filtering="false"/>
+                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
+                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}"
+                                        />
+                                        <unzip src="${project.parent.relativePath}/../release-data/windows/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}"
+                                        />
+                                        <zip destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-windows.zip">
+                                            <fileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows"/>
+                                        </zip>
+                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows"/>
+
+                                        <!-- linux -->
+                                        <echo>LINUX RELEASE:${line.separator}</echo>
+                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}" filtering="false">
+                                            <fileset dir="${project.parent.relativePath}/../release-data/linux">
+                                                <exclude name="*.zip"/>
+                                            </fileset>
+                                        </copy>
+                                        <replace file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/config.json">
+                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
+                                            <replacefilter token="#release.class#" value="${release.class}"/>
+                                        </replace>
+                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/project.launcher"
+                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/${project.artifactId}"
+                                              filtering="false"/>
+                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
+                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}"
+                                        />
+                                        <unzip src="${project.parent.relativePath}/../release-data/linux/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}"
+                                        />
+                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/${project.artifactId}"
+                                               perm="755"/>
+                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/jre/bin/java"
+                                               perm="755"/>
+                                        <tar destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-linux.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux" filemode="755">
+                                                <include name="${project.artifactId}/${project.artifactId}"/>
+                                                <include name="${project.artifactId}/jre/bin/java"/>
+                                            </tarfileset>
+                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux">
+                                                <include name="**"/>
+                                                <exclude name="${project.artifactId}/${project.artifactId}"/>
+                                                <exclude name="${project.artifactId}/jre/bin/java"/>
+                                            </tarfileset>
+                                        </tar>
+                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux"/>
+
+                                        <!-- mac -->
+                                        <echo>MAC RELEASE:${line.separator}</echo>
+                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app" filtering="false">
+                                            <fileset dir="${project.parent.relativePath}/../release-data/mac">
+                                                <exclude name="*.zip"/>
+                                            </fileset>
+                                        </copy>
+                                        <replace dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app"
+                                                 includes="Contents/Info.plist,Contents/Resources/config.json">
+                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
+                                            <replacefilter token="#release.class#" value="${release.class}"/>
+                                            <replacefilter token="#release.launcher#" value="${project.artifactId}"/>
+                                            <replacefilter token="#release.version#" value="${project.version}"/>
+                                            <replacefilter token="#release.name#" value="${project.name}" />
+                                            <replacefilter token="#release.package#" value="${release.package}" />
+                                            <replacefilter token="#release.copyright#" value="${release.copyright}"/>
+                                            <replacefilter token="#release.ios.category#" value="${release.ios.category}"/>
+                                        </replace>
+                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/project.launcher"
+                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/${project.artifactId}"
+                                              filtering="false"/>
+                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
+                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources"
+                                        />
+                                        <unzip src="${project.parent.relativePath}/../release-data/mac/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources"
+                                        />
+                                        <replace
+                                                file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Info.plist">
+                                            <replacefilter token="#project.version#" value="${project.version}"/>
+                                            <replaceFilter token="#project.name#" value="${project.build.finalName}"/>
+                                        </replace>
+                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/${project.artifactId}"
+                                               perm="755"/>
+                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources/jre/bin/java"
+                                               perm="755"/>
+                                        <tar destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-mac.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac" filemode="755">
+                                                <include name="${project.artifactId}.app/Contents/MacOS/${project.artifactId}"/>
+                                                <include name="${project.artifactId}.app/Contents/Resources/jre/bin/java"/>
+                                            </tarfileset>
+                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac">
+                                                <include name="**"/>
+                                                <exclude name="${project.artifactId}.app/Contents/MacOS/${project.artifactId}"/>
+                                                <exclude name="${project.artifactId}.app/Contents/Resources/jre/bin/java"/>
+                                            </tarfileset>
+                                        </tar>
+                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac"/>
+
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
