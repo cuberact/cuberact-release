@@ -8,7 +8,6 @@
         <groupId>org.cuberact</groupId>
         <artifactId>cuberact-parent</artifactId>
         <version>1.0.2</version>
-        <relativePath>../cuberact-parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>cuberact-release</artifactId>
@@ -17,6 +16,21 @@
 
     <name>cuberact-release</name>
     <description>parent pom for releasable projects - maven profile release</description>
+
+    <properties>
+        <release-data.path>${project.parent.relativePath}/../release-data</release-data.path>
+        <release.copyright>${project.name} - ${project.organization.name}</release.copyright>
+        <release.ios.category>public.app-category.developer-tools</release.ios.category>
+        <release.project>${project.artifactId}</release.project>
+        <release.project.name>${project.name}</release.project.name>
+        <release.version>${project.version}</release.version>
+
+        <release.path.windows.project.launcher>OVERRIDE PROPERTY release.path.windows.project.launcher</release.path.windows.project.launcher>
+        <release.path.mac.icon>OVERRIDE PROPERTY release.path.mac.icon</release.path.mac.icon>
+        <release.path.linux.icon>OVERRIDE PROPERTY release.path.linux.icon</release.path.linux.icon>
+        <release.class>OVERRIDE PROPERTY release.class</release.class>
+        <release.package>OVERRIDE PROPERTY release.class</release.package>
+    </properties>
 
     <build>
         <resources>
@@ -36,16 +50,6 @@
             </resource>
         </resources>
     </build>
-
-    <properties>
-        <release.jar>${project.artifactId}.jar</release.jar>
-        <release.copyright>${project.name} - ${project.description} - ${project.organization.name}</release.copyright>
-        <release.ios.category>public.app-category.developer-tools</release.ios.category>
-
-        <!-- must be overridden by child pom -->
-        <release.class>org.release.Launcher</release.class>
-        <release.package>org.release</release.package>
-    </properties>
 
     <profiles>
         <profile>
@@ -74,7 +78,7 @@
                         <configuration>
                             <proguardVersion>6.1.1</proguardVersion>
                             <proguardInclude>proguard.conf</proguardInclude>
-                            <mappingFileName>${project.artifactId}-v${project.version}.proguard</mappingFileName>
+                            <mappingFileName>${release.project}-v${release.version}.proguard</mappingFileName>
                             <libs>
                                 <lib>${project.basedir}/release/proguard-jre/jre/lib/rt.jar</lib>
                                 <lib>${project.basedir}/release/proguard-jre/jre/lib/jce.jar</lib>
@@ -100,7 +104,7 @@
                                     <mainClass>${release.class}</mainClass>
                                 </manifest>
                             </archive>
-                            <finalName>${project.artifactId}</finalName>
+                            <finalName>${release.project}</finalName>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
@@ -120,10 +124,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <!-- proguard -->
-                                        <unzip src="${project.parent.relativePath}/../release-data/linux/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/proguard-jre"
-                                        />
+                                        <unzip src="${release-data.path}/linux/jre-1.8.212.zip" dest="${project.basedir}/release/proguard-jre"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -136,142 +137,145 @@
                                 <configuration>
                                     <target>
 
-                                        <!-- meta-inf services from project -->
+                                        <!-- ********************************************************************************************************************************* -->
+
                                         <echo>META-INF SERVICES:${line.separator}</echo>
-                                        <unzip src="${project.basedir}/target/${project.artifactId}.jar"
-                                               dest="${project.basedir}/target/${project.artifactId}-unzipped"
-                                        />
-                                        <delete file="${project.basedir}/target/${project.artifactId}.jar"/>
-                                        <!--delete>
-                                            <fileset dir="${project.basedir}/target/${project.artifactId}-unzipped/META-INF/services">
-                                                <include name="**/*"/>
-                                            </fileset>
-                                        </delete-->
-                                        <copy todir="${project.basedir}/target/${project.artifactId}-unzipped/META-INF/services" overwrite="true">
+                                        <unzip src="${project.basedir}/target/${release.project}.jar"
+                                               dest="${project.basedir}/target/${release.project}-unzipped"/>
+                                        <delete file="${project.basedir}/target/${release.project}.jar"/>
+                                        <copy todir="${project.basedir}/target/${release.project}-unzipped/META-INF/services" overwrite="true">
                                             <fileset dir="${project.basedir}/src/main/resources/META-INF/services"/>
                                         </copy>
-                                        <zip destfile="${project.basedir}/target/${project.artifactId}.jar">
-                                            <fileset dir="${project.basedir}/target/${project.artifactId}-unzipped"/>
+                                        <delete dir="${project.basedir}/target/${release.project}-unzipped/META-INF/maven"/>
+                                        <zip destfile="${project.basedir}/target/${release.project}.jar">
+                                            <fileset dir="${project.basedir}/target/${release.project}-unzipped"/>
                                         </zip>
 
-                                        <!-- proguard mapping file -->
+                                        <!-- ********************************************************************************************************************************* -->
+
                                         <echo>PROGUARD MAPPING FILE:${line.separator}</echo>
-                                        <copy file="${project.basedir}/target/${project.artifactId}-v${project.version}.proguard"
-                                              todir="${project.basedir}/proguard"
-                                        />
+                                        <copy file="${project.basedir}/target/${release.project}-v${release.version}.proguard"
+                                              todir="${project.basedir}/release-proguard-mappings"/>
                                         <delete dir="${project.basedir}/release/proguard-jre"/>
 
-                                        <!-- windows -->
-                                        <echo>WINDOWS RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}" filtering="false">
-                                            <fileset dir="${project.parent.relativePath}/../release-data/windows">
-                                                <exclude name="*.zip"/>
-                                            </fileset>
-                                        </copy>
-                                        <replace file="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/config.json">
-                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
-                                            <replacefilter token="#release.class#" value="${release.class}"/>
-                                        </replace>
-                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/project.launcher"
-                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}/${project.artifactId}.exe"
-                                              filtering="false"/>
-                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
-                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}"
-                                        />
-                                        <unzip src="${project.parent.relativePath}/../release-data/windows/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-windows/${project.artifactId}"
-                                        />
-                                        <zip destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-windows.zip">
-                                            <fileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows"/>
-                                        </zip>
-                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-windows"/>
+                                        <!-- ********************************************************************************************************************************* -->
 
-                                        <!-- linux -->
-                                        <echo>LINUX RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}" filtering="false">
-                                            <fileset dir="${project.parent.relativePath}/../release-data/linux">
+                                        <echo>WINDOWS RELEASE:${line.separator}</echo>
+                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}">
+                                            <fileset dir="${release-data.path}/windows">
                                                 <exclude name="*.zip"/>
                                             </fileset>
                                         </copy>
-                                        <replace file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/config.json">
-                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
+                                        <replace file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/config.json">
+                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
                                         </replace>
-                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/project.launcher"
-                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/${project.artifactId}"
-                                              filtering="false"/>
-                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
-                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}"
-                                        />
-                                        <unzip src="${project.parent.relativePath}/../release-data/linux/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}"
-                                        />
-                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/${project.artifactId}"
+
+                                        <!-- replace exe from project (if exists) with correct icon -->
+                                        <copy overwrite="true" failonerror="false"
+                                              file="${release.path.windows.project.launcher}/project.launcher"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
+
+                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/project.launcher"
+                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/${release.project}.exe"/>
+                                        <copy file="${project.basedir}/target/${release.project}.jar"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
+                                        <unzip src="${release-data.path}/windows/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
+                                        <zip destfile="${project.basedir}/release/${release.project}-v${release.version}-windows.zip">
+                                            <fileset dir="${project.basedir}/release/${release.project}-v${release.version}-windows"/>
+                                        </zip>
+                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-windows"/>
+
+                                        <!-- ********************************************************************************************************************************* -->
+
+                                        <echo>LINUX RELEASE:${line.separator}</echo>
+                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}">
+                                            <fileset dir="${release-data.path}/linux">
+                                                <exclude name="*.zip"/>
+                                            </fileset>
+                                        </copy>
+
+                                        <!-- linux icon if exists -->
+                                        <copy overwrite="true" failonerror="false"
+                                              file="${release.path.linux.icon}/icon.png"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
+
+                                        <replace file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/config.json">
+                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
+                                            <replacefilter token="#release.class#" value="${release.class}"/>
+                                        </replace>
+                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/project.launcher"
+                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/${release.project}"/>
+                                        <copy file="${project.basedir}/target/${release.project}.jar"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
+                                        <unzip src="${release-data.path}/linux/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
+                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/${release.project}"
                                                perm="755"/>
-                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-linux/${project.artifactId}/jre/bin/java"
+                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/jre/bin/java"
                                                perm="755"/>
-                                        <tar destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-linux.tar.gz" compression="gzip">
-                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux" filemode="755">
-                                                <include name="${project.artifactId}/${project.artifactId}"/>
-                                                <include name="${project.artifactId}/jre/bin/java"/>
+                                        <tar destfile="${project.basedir}/release/${release.project}-v${release.version}-linux.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux" filemode="755">
+                                                <include name="${release.project}/${release.project}"/>
+                                                <include name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
-                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux">
+                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux">
                                                 <include name="**"/>
-                                                <exclude name="${project.artifactId}/${project.artifactId}"/>
-                                                <exclude name="${project.artifactId}/jre/bin/java"/>
+                                                <exclude name="${release.project}/${release.project}"/>
+                                                <exclude name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
                                         </tar>
-                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-linux"/>
+                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-linux"/>
 
-                                        <!-- mac -->
+                                        <!-- ********************************************************************************************************************************* -->
+
                                         <echo>MAC RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app" filtering="false">
-                                            <fileset dir="${project.parent.relativePath}/../release-data/mac">
+                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app">
+                                            <fileset dir="${release-data.path}/mac">
                                                 <exclude name="*.zip"/>
                                             </fileset>
                                         </copy>
-                                        <replace dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app"
+
+                                        <!-- replace icons.icns from project (if exists) with correct icon -->
+                                        <copy overwrite="true" failonerror="false"
+                                              file="${release.path.mac.icon}/icons.icns"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
+
+                                        <replace dir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app"
                                                  includes="Contents/Info.plist,Contents/Resources/config.json">
-                                            <replacefilter token="#release.jar#" value="${project.artifactId}.jar"/>
+                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
-                                            <replacefilter token="#release.launcher#" value="${project.artifactId}"/>
-                                            <replacefilter token="#release.version#" value="${project.version}"/>
-                                            <replacefilter token="#release.name#" value="${project.name}" />
+                                            <replacefilter token="#release.launcher#" value="${release.project}"/>
+                                            <replacefilter token="#release.version#" value="${release.version}"/>
+                                            <replacefilter token="#release.name#" value="${release.project.name}" />
                                             <replacefilter token="#release.package#" value="${release.package}" />
                                             <replacefilter token="#release.copyright#" value="${release.copyright}"/>
                                             <replacefilter token="#release.ios.category#" value="${release.ios.category}"/>
                                         </replace>
-                                        <move file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/project.launcher"
-                                              tofile="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/${project.artifactId}"
+                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/project.launcher"
+                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"
                                               filtering="false"/>
-                                        <copy file="${project.basedir}/target/${project.artifactId}.jar"
-                                              todir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources"
-                                        />
-                                        <unzip src="${project.parent.relativePath}/../release-data/mac/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources"
-                                        />
-                                        <replace
-                                                file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Info.plist">
-                                            <replacefilter token="#project.version#" value="${project.version}"/>
-                                            <replaceFilter token="#project.name#" value="${project.build.finalName}"/>
-                                        </replace>
-                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/MacOS/${project.artifactId}"
+                                        <copy file="${project.basedir}/target/${release.project}.jar"
+                                              todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
+                                        <unzip src="${release-data.path}/mac/jre-1.8.212.zip"
+                                               dest="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
+                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"
                                                perm="755"/>
-                                        <chmod file="${project.basedir}/release/${project.artifactId}-v${project.version}-mac/${project.artifactId}.app/Contents/Resources/jre/bin/java"
+                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources/jre/bin/java"
                                                perm="755"/>
-                                        <tar destfile="${project.basedir}/release/${project.artifactId}-v${project.version}-mac.tar.gz" compression="gzip">
-                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac" filemode="755">
-                                                <include name="${project.artifactId}.app/Contents/MacOS/${project.artifactId}"/>
-                                                <include name="${project.artifactId}.app/Contents/Resources/jre/bin/java"/>
+                                        <tar destfile="${project.basedir}/release/${release.project}-v${release.version}-mac.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-mac" filemode="755">
+                                                <include name="${release.project}.app/Contents/MacOS/${release.project}"/>
+                                                <include name="${release.project}.app/Contents/Resources/jre/bin/java"/>
                                             </tarfileset>
-                                            <tarfileset dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac">
+                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-mac">
                                                 <include name="**"/>
-                                                <exclude name="${project.artifactId}.app/Contents/MacOS/${project.artifactId}"/>
-                                                <exclude name="${project.artifactId}.app/Contents/Resources/jre/bin/java"/>
+                                                <exclude name="${release.project}.app/Contents/MacOS/${release.project}"/>
+                                                <exclude name="${release.project}.app/Contents/Resources/jre/bin/java"/>
                                             </tarfileset>
                                         </tar>
-                                        <delete dir="${project.basedir}/release/${project.artifactId}-v${project.version}-mac"/>
-
+                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-mac"/>
                                     </target>
                                 </configuration>
                             </execution>
