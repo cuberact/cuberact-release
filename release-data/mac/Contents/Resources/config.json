@@ -1,8 +1,7 @@
 {
-  "classPath": [
-    "#release.jar#"
-  ],
+  "project" : "#release.project#",
+  "version" : "#release.version#",
+  "classPath": [ "#release.jar#" ],
   "mainClass": "#release.class#",
-  "vmArgs": [
-  ]
+  "vmArgs": [ ]
 }

@@ -24,6 +24,8 @@
         <release.project>${project.artifactId}</release.project>
         <release.project.name>${project.name}</release.project.name>
         <release.version>${project.version}</release.version>
+        <release.version.resource>version.txt</release.version.resource>
+        <release.proguard.config>proguard.conf</release.proguard.config>
 
         <release.path.windows.project.launcher>OVERRIDE PROPERTY release.path.windows.project.launcher</release.path.windows.project.launcher>
         <release.path.mac.icon>OVERRIDE PROPERTY release.path.mac.icon</release.path.mac.icon>
@@ -38,14 +40,14 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <excludes>
-                    <exclude>version.txt</exclude>
+                    <exclude>${release.version.resource}</exclude>
                 </excludes>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>version.txt</include>
+                    <include>${release.version.resource}</include>
                 </includes>
             </resource>
         </resources>
@@ -77,7 +79,7 @@
                         </executions>
                         <configuration>
                             <proguardVersion>6.1.1</proguardVersion>
-                            <proguardInclude>proguard.conf</proguardInclude>
+                            <proguardInclude>${release.proguard.config}</proguardInclude>
                             <mappingFileName>${release.project}-v${release.version}.proguard</mappingFileName>
                             <libs>
                                 <lib>${project.basedir}/release/proguard-jre/jre/lib/rt.jar</lib>
@@ -167,15 +169,14 @@
                                             </fileset>
                                         </copy>
                                         <replace file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/config.json">
+                                            <replacefilter token="#release.project#" value="${release.project}"/>
+                                            <replacefilter token="#release.version#" value="${release.version}"/>
                                             <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
                                         </replace>
-
-                                        <!-- replace exe from project (if exists) with correct icon -->
                                         <copy overwrite="true" failonerror="false"
                                               file="${release.path.windows.project.launcher}/project.launcher"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
-
                                         <move file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/project.launcher"
                                               tofile="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/${release.project}.exe"/>
                                         <copy file="${project.basedir}/target/${release.project}.jar"
@@ -195,13 +196,12 @@
                                                 <exclude name="*.zip"/>
                                             </fileset>
                                         </copy>
-
-                                        <!-- linux icon if exists -->
                                         <copy overwrite="true" failonerror="false"
                                               file="${release.path.linux.icon}/icon.png"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
-
                                         <replace file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/config.json">
+                                            <replacefilter token="#release.project#" value="${release.project}"/>
+                                            <replacefilter token="#release.version#" value="${release.version}"/>
                                             <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
                                         </replace>
@@ -236,18 +236,16 @@
                                                 <exclude name="*.zip"/>
                                             </fileset>
                                         </copy>
-
-                                        <!-- replace icons.icns from project (if exists) with correct icon -->
                                         <copy overwrite="true" failonerror="false"
                                               file="${release.path.mac.icon}/icons.icns"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
-
                                         <replace dir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app"
                                                  includes="Contents/Info.plist,Contents/Resources/config.json">
+                                            <replacefilter token="#release.project#" value="${release.project}"/>
+                                            <replacefilter token="#release.version#" value="${release.version}"/>
                                             <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
                                             <replacefilter token="#release.launcher#" value="${release.project}"/>
-                                            <replacefilter token="#release.version#" value="${release.version}"/>
                                             <replacefilter token="#release.name#" value="${release.project.name}" />
                                             <replacefilter token="#release.package#" value="${release.package}" />
                                             <replacefilter token="#release.copyright#" value="${release.copyright}"/>
