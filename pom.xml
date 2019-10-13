@@ -237,7 +237,7 @@
                                             </fileset>
                                         </copy>
                                         <copy overwrite="true" failonerror="false"
-                                              file="${release.path.mac.icon}/icons.icns"
+                                              file="${release.path.mac.icon}/icon.icns"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
                                         <replace dir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app"
                                                  includes="Contents/Info.plist,Contents/Resources/config.json">
