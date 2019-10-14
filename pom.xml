@@ -19,13 +19,18 @@
 
     <properties>
         <release-data.path>${project.parent.relativePath}/../release-data</release-data.path>
-        <release.copyright>${project.name} - ${project.organization.name}</release.copyright>
-        <release.ios.category>public.app-category.developer-tools</release.ios.category>
+
+        <release.proguard.config>proguard.conf</release.proguard.config>
+
         <release.project>${project.artifactId}</release.project>
         <release.project.name>${project.name}</release.project.name>
         <release.version>${project.version}</release.version>
         <release.version.resource>version.txt</release.version.resource>
-        <release.proguard.config>proguard.conf</release.proguard.config>
+
+        <release.copyright>${project.name} - ${project.organization.name}</release.copyright>
+        <release.linux.comment>${project.name}</release.linux.comment>
+        <release.linux.category>Development;</release.linux.category>
+        <release.ios.category>public.app-category.developer-tools</release.ios.category>
 
         <release.path.windows.project.exe>OVERRIDE PROPERTY release.path.windows.project.exe</release.path.windows.project.exe>
         <release.path.mac.icon>OVERRIDE PROPERTY release.path.mac.icon</release.path.mac.icon>
@@ -199,11 +204,15 @@
                                         <copy overwrite="true" failonerror="false"
                                               file="${release.path.linux.icon}/icon.png"
                                               todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
-                                        <replace file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/config.json">
+                                        <replace dir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"
+                                                 includes="config.json,install-desktop-entry.sh">
                                             <replacefilter token="#release.project#" value="${release.project}"/>
+                                            <replacefilter token="#release.project.name#" value="${release.project.name}"/>
                                             <replacefilter token="#release.version#" value="${release.version}"/>
                                             <replacefilter token="#release.jar#" value="${release.project}.jar"/>
                                             <replacefilter token="#release.class#" value="${release.class}"/>
+                                            <replacefilter token="#release.linux.comment#" value="${release.linux.comment}"/>
+                                            <replacefilter token="#release.linux.category#" value="${release.linux.category}"/>
                                         </replace>
                                         <move file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/project.launcher"
                                               tofile="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/${release.project}"/>
@@ -218,11 +227,13 @@
                                         <tar destfile="${project.basedir}/release/${release.project}-v${release.version}-linux.tar.gz" compression="gzip">
                                             <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux" filemode="755">
                                                 <include name="${release.project}/${release.project}"/>
+                                                <include name="${release.project}/install-desktop-entry.sh"/>
                                                 <include name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
                                             <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux">
                                                 <include name="**"/>
                                                 <exclude name="${release.project}/${release.project}"/>
+                                                <exclude name="${release.project}/install-desktop-entry.sh"/>
                                                 <exclude name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
                                         </tar>
