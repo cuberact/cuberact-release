@@ -39,7 +39,7 @@
         <release.mac.category>public.app-category.developer-tools</release.mac.category>
         <release.mac.copyright>${project.name} - ${project.organization.name}</release.mac.copyright>
 
-        <release.cleanup.target.after>true</release.cleanup.target.after>
+        <release.cleanup>true</release.cleanup>
     </properties>
 
     <build>
@@ -171,7 +171,7 @@
                                         <echo message="release.mac.replace.variables.excludes = ${release.mac.replace.variables.excludes}"/>
                                         <echo message="release.mac.category = ${release.mac.category}"/>
                                         <echo message="release.mac.copyright = ${release.mac.copyright}"/>
-                                        <echo message="release.cleanup.target.after = ${release.cleanup.target.after}"/>
+                                        <echo message="release.cleanup = ${release.cleanup}"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -401,7 +401,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <target if="${release.cleanup.target.after}">
+                                    <target if="${release.cleanup}">
                                         <delete dir="${project.basedir}/target/proguard" failonerror="false"/>
                                         <delete dir="${project.basedir}/target/${release.project}-v${release.version}-linux" failonerror="false"/>
                                         <delete dir="${project.basedir}/target/${release.project}-v${release.version}-windows" failonerror="false"/>
