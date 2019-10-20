@@ -274,6 +274,8 @@
                                                dest="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}"/>
                                         <chmod file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/${release.project}"
                                                perm="755"/>
+                                        <chmod file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/install-desktop-entry.sh"
+                                               perm="755"/>
                                         <chmod file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/jre/bin/java"
                                                perm="755"/>
                                         <echo message="Next tar src dir is ${project.basedir}/target/${release.project}-v${release.version}-linux"/>
