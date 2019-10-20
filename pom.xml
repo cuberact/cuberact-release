@@ -18,44 +18,59 @@
     <description>parent pom for releasable projects - maven profile release</description>
 
     <properties>
-        <release-data.path>${project.parent.relativePath}/../release-data</release-data.path>
+        <folder.release-data.main>MUST BE OVERRIDDEN</folder.release-data.main>
+        <folder.release-data.project>${project.basedir}/release-data</folder.release-data.project>
+        <folder.proguard-mappings>${project.basedir}/proguard-mappings</folder.proguard-mappings>
+        <folder.releases>${project.basedir}/releases</folder.releases>
 
-        <release.proguard.config>proguard.conf</release.proguard.config>
+        <release.package>MUST BE OVERRIDDEN</release.package>
+        <release.main-class>MUST BE OVERRIDDEN</release.main-class>
 
         <release.project>${project.artifactId}</release.project>
         <release.project.name>${project.name}</release.project.name>
         <release.version>${project.version}</release.version>
-        <release.version.resource>version.txt</release.version.resource>
 
-        <release.copyright>${project.name} - ${project.organization.name}</release.copyright>
-        <release.linux.comment>${project.name}</release.linux.comment>
-        <release.linux.category>Development;</release.linux.category>
-        <release.ios.category>public.app-category.developer-tools</release.ios.category>
+        <release.var.linux.comment>${project.name}</release.var.linux.comment>
+        <release.var.linux.category>Development;</release.var.linux.category>
+        <release.var.mac.category>public.app-category.developer-tools</release.var.mac.category>
+        <release.var.mac.copyright>${project.name} - ${project.organization.name}</release.var.mac.copyright>
 
-        <release.path.windows.project.exe>OVERRIDE PROPERTY release.path.windows.project.exe</release.path.windows.project.exe>
-        <release.path.mac.icon>OVERRIDE PROPERTY release.path.mac.icon</release.path.mac.icon>
-        <release.path.linux.icon>OVERRIDE PROPERTY release.path.linux.icon</release.path.linux.icon>
-        <release.class>OVERRIDE PROPERTY release.class</release.class>
-        <release.package>OVERRIDE PROPERTY release.class</release.package>
+        <release.resolve.variables.in>**/version.txt</release.resolve.variables.in>
     </properties>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>${release.version.resource}</exclude>
-                </excludes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>${release.version.resource}</include>
-                </includes>
-            </resource>
-        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>resolve-version-txt</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo message="Resolve #{variables} in ${project.basedir}/target includes ${release.resolve.variables.in}"/>
+                                <replace dir="${project.basedir}/target" includes="${release.resolve.variables.in}">
+                                    <replacefilter token="#{release.package}" value="${release.package}"/>
+                                    <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
+                                    <replacefilter token="#{release.project}" value="${release.project}"/>
+                                    <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
+                                    <replacefilter token="#{release.version}" value="${release.version}"/>
+                                    <replacefilter token="#{release.var.linux.comment}" value="${release.var.linux.comment}"/>
+                                    <replacefilter token="#{release.var.linux.category}" value="${release.var.linux.category}"/>
+                                    <replacefilter token="#{release.var.mac.category}" value="${release.var.mac.category}"/>
+                                    <replacefilter token="#{release.var.mac.copyright}" value="${release.var.mac.copyright}"/>
+                                </replace>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>
@@ -84,12 +99,15 @@
                         </executions>
                         <configuration>
                             <proguardVersion>6.1.1</proguardVersion>
-                            <proguardInclude>${release.proguard.config}</proguardInclude>
-                            <mappingFileName>${release.project}-v${release.version}.proguard</mappingFileName>
+                            <proguardInclude>${project.basedir}/target/proguard/proguard.config</proguardInclude>
+                            <seedFileName>${release.project}-v${release.version}-proguard.seed</seedFileName>
+                            <mappingFileName>${release.project}-v${release.version}-proguard.mapping</mappingFileName>
+                            <putLibraryJarsInTempDir>true</putLibraryJarsInTempDir>
+                            <obfuscate>true</obfuscate>
                             <libs>
-                                <lib>${project.basedir}/release/proguard-jre/jre/lib/rt.jar</lib>
-                                <lib>${project.basedir}/release/proguard-jre/jre/lib/jce.jar</lib>
-                                <lib>${project.basedir}/release/proguard-jre/jre/lib/jsse.jar</lib>
+                                <lib>${project.basedir}/target/proguard/jre/lib/rt.jar</lib>
+                                <lib>${project.basedir}/target/proguard/jre/lib/jce.jar</lib>
+                                <lib>${project.basedir}/target/proguard/jre/lib/jsse.jar</lib>
                             </libs>
                         </configuration>
                     </plugin>
@@ -108,7 +126,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>${release.class}</mainClass>
+                                    <mainClass>${release.main-class}</mainClass>
                                 </manifest>
                             </archive>
                             <finalName>${release.project}</finalName>
@@ -124,6 +142,32 @@
                         <version>1.8</version>
                         <executions>
                             <execution>
+                                <id>print-release-variables</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo message="--- Release info --- Variables:"/>
+                                        <echo message="    folder.release-data.main = ${folder.release-data.main}"/>
+                                        <echo message="    folder.release-data.project = ${folder.release-data.project}"/>
+                                        <echo message="    folder.proguard-mappings = ${folder.proguard-mappings}"/>
+                                        <echo message="    folder.releases = ${folder.releases}"/>
+                                        <echo message="    release.package = ${release.package}"/>
+                                        <echo message="    release.main-class = ${release.main-class}"/>
+                                        <echo message="    release.project = ${release.project}"/>
+                                        <echo message="    release.project.name = ${release.project.name}"/>
+                                        <echo message="    release.version = ${release.version}"/>
+                                        <echo message="    release.var.linux.comment = ${release.var.linux.comment}"/>
+                                        <echo message="    release.var.linux.category = ${release.var.linux.category}"/>
+                                        <echo message="    release.var.mac.category = ${release.var.mac.category}"/>
+                                        <echo message="    release.var.mac.copyright = ${release.var.mac.copyright}"/>
+                                        <echo message="    release.resolve.variables.in = ${release.resolve.variables.in}"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>proguard-jre-preparation</id>
                                 <phase>process-resources</phase>
                                 <goals>
@@ -131,22 +175,40 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <unzip src="${release-data.path}/linux/jre-1.8.212.zip" dest="${project.basedir}/release/proguard-jre"/>
+                                        <echo message="--- Release step --- preparing files for proguard"/>
+                                        <unzip src="${folder.release-data.main}/jre/linux-jre-1.8.212.zip"
+                                               dest="${project.basedir}/target/proguard">
+                                            <patternset>
+                                                <include name="jre/lib/rt.jar"/>
+                                                <include name="jre/lib/jce.jar"/>
+                                                <include name="jre/lib/jsse.jar"/>
+                                            </patternset>
+                                        </unzip>
+                                        <copy file="${folder.release-data.main}/proguard/proguard.config"
+                                              tofile="${project.basedir}/target/proguard/proguard.config"/>
+                                        <copy file="${folder.release-data.project}/proguard/proguard.config"
+                                              tofile="${project.basedir}/target/proguard/proguard.config"
+                                              overwrite="true" failonerror="false"
+                                        />
+                                        <replace file="${project.basedir}/target/proguard/proguard.config">
+                                            <replacefilter token="#{release.package}" value="${release.package}"/>
+                                            <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
+                                            <replacefilter token="#{release.project}" value="${release.project}"/>
+                                            <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
+                                            <replacefilter token="#{release.version}" value="${release.version}"/>
+                                        </replace>
                                     </target>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>zip-releases</id>
+                                <id>releases-platforms</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
                                     <target>
-
-                                        <!-- ********************************************************************************************************************************* -->
-
-                                        <echo>META-INF SERVICES:${line.separator}</echo>
+                                        <echo message="--- Release step --- fix META-INF/services"/>
                                         <unzip src="${project.basedir}/target/${release.project}.jar"
                                                dest="${project.basedir}/target/${release.project}-unzipped"/>
                                         <delete file="${project.basedir}/target/${release.project}.jar"/>
@@ -157,134 +219,141 @@
                                         <zip destfile="${project.basedir}/target/${release.project}.jar">
                                             <fileset dir="${project.basedir}/target/${release.project}-unzipped"/>
                                         </zip>
+                                        <delete dir="${project.basedir}/target/${release.project}-unzipped"/>
 
-                                        <!-- ********************************************************************************************************************************* -->
+                                        <!-- ***************************************************************************************************************************** -->
 
-                                        <echo>PROGUARD MAPPING FILE:${line.separator}</echo>
-                                        <copy file="${project.basedir}/target/${release.project}-v${release.version}.proguard"
-                                              todir="${project.basedir}/release-proguard-mappings"/>
-                                        <delete dir="${project.basedir}/release/proguard-jre"/>
+                                        <echo message="--- Release step --- copy Proguard mapping file"/>
+                                        <copy file="${project.basedir}/target/${release.project}-v${release.version}-proguard.mapping"
+                                              todir="${folder.proguard-mappings}"/>
 
-                                        <!-- ********************************************************************************************************************************* -->
+                                        <!-- ***************************************************************************************************************************** -->
 
-                                        <echo>WINDOWS RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}">
-                                            <fileset dir="${release-data.path}/windows">
-                                                <exclude name="*.zip"/>
-                                            </fileset>
+                                        <echo message=""/>
+                                        <echo message="--- Release --- LINUX"/>
+                                        <echo message=""/>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}">
+                                            <fileset dir="${folder.release-data.main}/linux"/>
                                         </copy>
-                                        <replace file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/config.json">
-                                            <replacefilter token="#release.project#" value="${release.project}"/>
-                                            <replacefilter token="#release.version#" value="${release.version}"/>
-                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
-                                            <replacefilter token="#release.class#" value="${release.class}"/>
-                                        </replace>
-                                        <copy overwrite="true" failonerror="false"
-                                              file="${release.path.windows.project.exe}/project.exe"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
-                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/project.exe"
-                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}/${release.project}.exe"/>
-                                        <copy file="${project.basedir}/target/${release.project}.jar"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
-                                        <unzip src="${release-data.path}/windows/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${release.project}-v${release.version}-windows/${release.project}"/>
-                                        <zip destfile="${project.basedir}/release/${release.project}-v${release.version}-windows.zip">
-                                            <fileset dir="${project.basedir}/release/${release.project}-v${release.version}-windows"/>
-                                        </zip>
-                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-windows"/>
-
-                                        <!-- ********************************************************************************************************************************* -->
-
-                                        <echo>LINUX RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}">
-                                            <fileset dir="${release-data.path}/linux">
-                                                <exclude name="*.zip"/>
-                                            </fileset>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}"
+                                              overwrite="true" failonerror="false">
+                                            <fileset dir="${folder.release-data.project}/linux"/>
                                         </copy>
-                                        <copy overwrite="true" failonerror="false"
-                                              file="${release.path.linux.icon}/icon.png"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
-                                        <replace dir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"
+                                        <replace dir="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}"
                                                  includes="config.json,install-desktop-entry.sh">
-                                            <replacefilter token="#release.project#" value="${release.project}"/>
-                                            <replacefilter token="#release.project.name#" value="${release.project.name}"/>
-                                            <replacefilter token="#release.version#" value="${release.version}"/>
-                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
-                                            <replacefilter token="#release.class#" value="${release.class}"/>
-                                            <replacefilter token="#release.linux.comment#" value="${release.linux.comment}"/>
-                                            <replacefilter token="#release.linux.category#" value="${release.linux.category}"/>
+                                            <replacefilter token="#{release.package}" value="${release.package}"/>
+                                            <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
+                                            <replacefilter token="#{release.project}" value="${release.project}"/>
+                                            <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
+                                            <replacefilter token="#{release.version}" value="${release.version}"/>
+                                            <replacefilter token="#{release.var.linux.comment}" value="${release.var.linux.comment}"/>
+                                            <replacefilter token="#{release.var.linux.category}" value="${release.var.linux.category}"/>
+                                            <replacefilter token="#{release.var.mac.category}" value="${release.var.mac.category}"/>
+                                            <replacefilter token="#{release.var.mac.copyright}" value="${release.var.mac.copyright}"/>
                                         </replace>
-                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/project.launcher"
-                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/${release.project}"/>
+                                        <move file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/project.elf"
+                                              tofile="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/${release.project}"/>
                                         <copy file="${project.basedir}/target/${release.project}.jar"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
-                                        <unzip src="${release-data.path}/linux/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}"/>
-                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/${release.project}"
+                                              todir="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}"/>
+                                        <unzip src="${folder.release-data.main}/jre/linux-jre-1.8.212.zip"
+                                               dest="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}"/>
+                                        <chmod file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/${release.project}"
                                                perm="755"/>
-                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-linux/${release.project}/jre/bin/java"
+                                        <chmod file="${project.basedir}/target/${release.project}-v${release.version}-linux/${release.project}/jre/bin/java"
                                                perm="755"/>
-                                        <tar destfile="${project.basedir}/release/${release.project}-v${release.version}-linux.tar.gz" compression="gzip">
-                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux" filemode="755">
+                                        <tar destfile="${folder.releases}/${release.project}-v${release.version}-linux.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/target/${release.project}-v${release.version}-linux" filemode="755">
                                                 <include name="${release.project}/${release.project}"/>
                                                 <include name="${release.project}/install-desktop-entry.sh"/>
                                                 <include name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
-                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-linux">
+                                            <tarfileset dir="${project.basedir}/target/${release.project}-v${release.version}-linux">
                                                 <include name="**"/>
                                                 <exclude name="${release.project}/${release.project}"/>
                                                 <exclude name="${release.project}/install-desktop-entry.sh"/>
                                                 <exclude name="${release.project}/jre/bin/java"/>
                                             </tarfileset>
                                         </tar>
-                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-linux"/>
 
-                                        <!-- ********************************************************************************************************************************* -->
+                                        <!-- ***************************************************************************************************************************** -->
 
-                                        <echo>MAC RELEASE:${line.separator}</echo>
-                                        <copy todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app">
-                                            <fileset dir="${release-data.path}/mac">
-                                                <exclude name="*.zip"/>
-                                            </fileset>
+                                        <echo message=""/>
+                                        <echo message="--- Release --- WINDOWS"/>
+                                        <echo message=""/>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}">
+                                            <fileset dir="${folder.release-data.main}/windows"/>
                                         </copy>
-                                        <copy overwrite="true" failonerror="false"
-                                              file="${release.path.mac.icon}/icon.icns"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
-                                        <replace dir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app"
-                                                 includes="Contents/Info.plist,Contents/Resources/config.json">
-                                            <replacefilter token="#release.project#" value="${release.project}"/>
-                                            <replacefilter token="#release.version#" value="${release.version}"/>
-                                            <replacefilter token="#release.jar#" value="${release.project}.jar"/>
-                                            <replacefilter token="#release.class#" value="${release.class}"/>
-                                            <replacefilter token="#release.launcher#" value="${release.project}"/>
-                                            <replacefilter token="#release.name#" value="${release.project.name}" />
-                                            <replacefilter token="#release.package#" value="${release.package}" />
-                                            <replacefilter token="#release.copyright#" value="${release.copyright}"/>
-                                            <replacefilter token="#release.ios.category#" value="${release.ios.category}"/>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}"
+                                              overwrite="true" failonerror="false">
+                                            <fileset dir="${folder.release-data.project}/windows"/>
+                                        </copy>
+                                        <replace dir="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}">
+                                            <include name="config.json"/>
+                                            <replacefilter token="#{release.package}" value="${release.package}"/>
+                                            <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
+                                            <replacefilter token="#{release.project}" value="${release.project}"/>
+                                            <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
+                                            <replacefilter token="#{release.version}" value="${release.version}"/>
+                                            <replacefilter token="#{release.var.linux.comment}" value="${release.var.linux.comment}"/>
+                                            <replacefilter token="#{release.var.linux.category}" value="${release.var.linux.category}"/>
+                                            <replacefilter token="#{release.var.mac.category}" value="${release.var.mac.category}"/>
+                                            <replacefilter token="#{release.var.mac.copyright}" value="${release.var.mac.copyright}"/>
                                         </replace>
-                                        <move file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/project.launcher"
-                                              tofile="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"
-                                              filtering="false"/>
+                                        <move file="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}/project.exe"
+                                              tofile="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}/${release.project}.exe"/>
                                         <copy file="${project.basedir}/target/${release.project}.jar"
-                                              todir="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
-                                        <unzip src="${release-data.path}/mac/jre-1.8.212.zip"
-                                               dest="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
-                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"
+                                              todir="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}"/>
+                                        <unzip src="${folder.release-data.main}/jre/windows-jre-1.8.212.zip"
+                                               dest="${project.basedir}/target/${release.project}-v${release.version}-windows/${release.project}"/>
+                                        <zip destfile="${folder.releases}/${release.project}-v${release.version}-windows.zip">
+                                            <fileset dir="${project.basedir}/target/${release.project}-v${release.version}-windows"/>
+                                        </zip>
+
+                                        <!-- ***************************************************************************************************************************** -->
+
+                                        <echo message=""/>
+                                        <echo message="--- Release --- MAC"/>
+                                        <echo message=""/>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app">
+                                            <fileset dir="${folder.release-data.main}/mac"/>
+                                        </copy>
+                                        <copy todir="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app"
+                                              overwrite="true" failonerror="false">
+                                            <fileset dir="${folder.release-data.project}/mac"/>
+                                        </copy>
+                                        <replace dir="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app"
+                                                 includes="Contents/Info.plist,Contents/Resources/config.json">
+                                            <replacefilter token="#{release.package}" value="${release.package}"/>
+                                            <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
+                                            <replacefilter token="#{release.project}" value="${release.project}"/>
+                                            <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
+                                            <replacefilter token="#{release.version}" value="${release.version}"/>
+                                            <replacefilter token="#{release.var.linux.comment}" value="${release.var.linux.comment}"/>
+                                            <replacefilter token="#{release.var.linux.category}" value="${release.var.linux.category}"/>
+                                            <replacefilter token="#{release.var.mac.category}" value="${release.var.mac.category}"/>
+                                            <replacefilter token="#{release.var.mac.copyright}" value="${release.var.mac.copyright}"/>
+                                        </replace>
+                                        <move file="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/project.mach-o"
+                                              tofile="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"/>
+                                        <copy file="${project.basedir}/target/${release.project}.jar"
+                                              todir="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
+                                        <unzip src="${folder.release-data.main}/jre/mac-jre-1.8.212.zip"
+                                               dest="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources"/>
+                                        <chmod file="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/MacOS/${release.project}"
                                                perm="755"/>
-                                        <chmod file="${project.basedir}/release/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources/jre/bin/java"
+                                        <chmod file="${project.basedir}/target/${release.project}-v${release.version}-mac/${release.project}.app/Contents/Resources/jre/bin/java"
                                                perm="755"/>
-                                        <tar destfile="${project.basedir}/release/${release.project}-v${release.version}-mac.tar.gz" compression="gzip">
-                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-mac" filemode="755">
+                                        <tar destfile="${folder.releases}/${release.project}-v${release.version}-mac.tar.gz" compression="gzip">
+                                            <tarfileset dir="${project.basedir}/target/${release.project}-v${release.version}-mac" filemode="755">
                                                 <include name="${release.project}.app/Contents/MacOS/${release.project}"/>
                                                 <include name="${release.project}.app/Contents/Resources/jre/bin/java"/>
                                             </tarfileset>
-                                            <tarfileset dir="${project.basedir}/release/${release.project}-v${release.version}-mac">
+                                            <tarfileset dir="${project.basedir}/target/${release.project}-v${release.version}-mac">
                                                 <include name="**"/>
                                                 <exclude name="${release.project}.app/Contents/MacOS/${release.project}"/>
                                                 <exclude name="${release.project}.app/Contents/Resources/jre/bin/java"/>
                                             </tarfileset>
                                         </tar>
-                                        <delete dir="${project.basedir}/release/${release.project}-v${release.version}-mac"/>
                                     </target>
                                 </configuration>
                             </execution>

@@ -3,23 +3,23 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleGetInfoString</key>
-  <string>#release.name#</string>
+  <string>#{release.project.name}</string>
   <key>CFBundleExecutable</key>
-  <string>#release.launcher#</string>
+  <string>#{release.project}</string>
   <key>CFBundleIdentifier</key>
-  <string>#release.package#</string>
+  <string>#{release.package}</string>
   <key>CFBundleName</key>
-  <string>#release.name#</string>
+  <string>#{release.project.name}</string>
   <key>CFBundleIconFile</key>
   <string>icon.icns</string>
   <key>CFBundleVersion</key>
-   <string>#release.version#</string>
+   <string>#{release.version}</string>
   <key>CFBundleShortVersionString</key>
-  <string>#release.version#</string>
+  <string>#{release.version}</string>
   <key>NSHumanReadableCopyright</key>
-  <string>#release.copyright#</string>
+  <string>#{release.var.mac.copyright}</string>
   <key>LSApplicationCategoryType</key>
-  <string>#release.ios.category#</string>
+  <string>#{release.var.mac.category}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
