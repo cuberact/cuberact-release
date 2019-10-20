@@ -17,9 +17,9 @@
   <key>CFBundleShortVersionString</key>
   <string>#{release.version}</string>
   <key>NSHumanReadableCopyright</key>
-  <string>#{release.var.mac.copyright}</string>
+  <string>#{release.mac.copyright}</string>
   <key>LSApplicationCategoryType</key>
-  <string>#{release.var.mac.category}</string>
+  <string>#{release.mac.category}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>

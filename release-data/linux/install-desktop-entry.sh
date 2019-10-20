@@ -9,8 +9,8 @@ echo "[Desktop Entry]" > $file_location
   echo "Name=#{release.project.name}"
   echo "Icon=$(dirname $(readlink -f $0))/icon.png"
   echo "Exec=$(dirname $(readlink -f $0))/#{release.project}"
-  echo "Comment=#{release.var.linux.comment}"
-  echo "Categories=#{release.var.linux.category}"
+  echo "Comment=#{release.linux.comment}"
+  echo "Categories=#{release.linux.category}"
   echo "Terminal=false"
 } >> $file_location
 
