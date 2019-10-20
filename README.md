@@ -1,36 +1,33 @@
 # cuberact-release
 
 prepare release your project for Windows, iOS and Linux
-1. clone this project to your harddrive
+1. Clone cuberact-release project to your drive (for example to /home/user/cuberact-release)
    
    ```$bash
    git clone git@github.com:cuberact/cuberact-release.git
    ```
 
-2. setup parent for your project pom.xml:
+2. In your project pom.xml use cuberact-release as parent pom
 
     ```$xml
     <parent>
         <groupId>org.cuberact</groupId>
         <artifactId>cuberact-release</artifactId>
-        <version>1.0.0</version>
+        <version>1.2.0</version>
     </parent>
     ```
    
-3. override properties from cuberact-proxy parent pom.xml in your project pom.xml
+3. override properties in your project pom.xml
 
     ```$xml
      <properties>
-         <release-data.path>/home/nkd/projects/cuberact/cuberact-release/release-data</release-data.path>
-         <release.path.windows.project.exe>${project.basedir}/release-data/windows</release.path.windows.project.exe>
-         <release.path.mac.icon>${project.basedir}/release-data/mac</release.path.mac.icon>
-         <release.path.linux.icon>${project.basedir}/release-data/linux</release.path.linux.icon>
-         <release.class>org.cuberact.proxy.Launcher</release.class>
-         <release.package>org.cuberact.proxy</release.package>
+          <folder.release-data.main>/home/user/cuberact-release/release-data</folder.release-data.main>
+          <release.package>org.yourpackage</release.package>
+          <release.main-class>org.yourpackage.Launcher</release.main-class>
      </properties>
     ```
 
 4. run maven in your project
     ```$bash
-      mvn clean install -Prelease
+      mvn clean package -Prelease
     ```
