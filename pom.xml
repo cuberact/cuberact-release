@@ -27,7 +27,6 @@
         <release.version>${project.version}</release.version>
 
         <folder.release-data.project>${project.basedir}/release-data</folder.release-data.project>
-        <folder.proguard-mappings>${project.basedir}/proguard-mappings</folder.proguard-mappings>
         <folder.releases>${project.basedir}/releases</folder.releases>
 
         <release.project.replace.variables.includes>**/version.txt</release.project.replace.variables.includes>
@@ -79,43 +78,6 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.cuberact</groupId>
-                        <artifactId>proguard-maven-plugin</artifactId>
-                        <version>2.1.2</version>
-                        <executions>
-                            <execution>
-                                <id>RELEASE---OBFUSCATE-WITH-PROGUARD</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>proguard</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <proguardInclude>${project.basedir}/target/proguard/proguard.config</proguardInclude>
-                            <seedFileName>${release.project}-v${release.version}-proguard.seed</seedFileName>
-                            <mappingFileName>${release.project}-v${release.version}-proguard.mapping</mappingFileName>
-                            <putLibraryJarsInTempDir>true</putLibraryJarsInTempDir>
-                            <obfuscate>true</obfuscate>
-                            <inFilter>!META-INF/**</inFilter>
-                            <inLibsFilter>!META-INF/**</inLibsFilter>
-                            <libs>
-                                <lib>${project.basedir}/target/proguard/jre/lib/rt.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/jce.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/jsse.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/charsets.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/cldrdata.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/dnsns.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/jaccess.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/localedata.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/sunec.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/sunjce_provider.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/sunpkcs11.jar</lib>
-                                <lib>${project.basedir}/target/proguard/jre/lib/ext/zipfs.jar</lib>
-                            </libs>
-                        </configuration>
-                    </plugin>
-                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <version>2.6</version>
@@ -156,7 +118,6 @@
                                     <target>
                                         <echo message="folder.release-data.main = ${folder.release-data.main}"/>
                                         <echo message="folder.release-data.project = ${folder.release-data.project}"/>
-                                        <echo message="folder.proguard-mappings = ${folder.proguard-mappings}"/>
                                         <echo message="folder.releases = ${folder.releases}"/>
                                         <echo message="release.package = ${release.package}"/>
                                         <echo message="release.main-class = ${release.main-class}"/>
@@ -172,39 +133,6 @@
                                         <echo message="release.mac.category = ${release.mac.category}"/>
                                         <echo message="release.mac.copyright = ${release.mac.copyright}"/>
                                         <echo message="release.cleanup = ${release.cleanup}"/>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>RELEASE---PREPARE-PROGUARD-FILES</id>
-                                <phase>process-resources</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <unzip src="${folder.release-data.main}/jre/linux-jre-1.8.212.zip"
-                                               dest="${project.basedir}/target/proguard">
-                                            <patternset>
-                                                <include name="jre/lib/**/*.jar"/>
-                                            </patternset>
-                                        </unzip>
-                                        <echo message="Next copy file is ${folder.release-data.main}/proguard/proguard.config"/>
-                                        <copy file="${folder.release-data.main}/proguard/proguard.config"
-                                              tofile="${project.basedir}/target/proguard/proguard.config"/>
-                                        <echo message="Next copy file is ${folder.release-data.project}/proguard/proguard.config (overwrite=true)"/>
-                                        <copy file="${folder.release-data.project}/proguard/proguard.config"
-                                              tofile="${project.basedir}/target/proguard/proguard.config"
-                                              overwrite="true" failonerror="false"
-                                        />
-                                        <echo message="Resolving #{variables} in ${project.basedir}/target/proguard/proguard.config"/>
-                                        <replace file="${project.basedir}/target/proguard/proguard.config">
-                                            <replacefilter token="#{release.package}" value="${release.package}"/>
-                                            <replacefilter token="#{release.main-class}" value="${release.main-class}"/>
-                                            <replacefilter token="#{release.project}" value="${release.project}"/>
-                                            <replacefilter token="#{release.project.name}" value="${release.project.name}"/>
-                                            <replacefilter token="#{release.version}" value="${release.version}"/>
-                                        </replace>
                                     </target>
                                 </configuration>
                             </execution>
@@ -229,9 +157,6 @@
                                             <fileset dir="${project.basedir}/target/${release.project}-unzipped"/>
                                         </zip>
                                         <delete dir="${project.basedir}/target/${release.project}-unzipped"/>
-                                        <echo message="Next copy file is ${project.basedir}/target/${release.project}-v${release.version}-proguard.mapping"/>
-                                        <copy file="${project.basedir}/target/${release.project}-v${release.version}-proguard.mapping"
-                                              todir="${folder.proguard-mappings}"/>
                                     </target>
                                 </configuration>
                             </execution>
@@ -404,7 +329,6 @@
                                 </goals>
                                 <configuration>
                                     <target if="${release.cleanup}">
-                                        <delete dir="${project.basedir}/target/proguard" failonerror="false"/>
                                         <delete dir="${project.basedir}/target/${release.project}-v${release.version}-linux" failonerror="false"/>
                                         <delete dir="${project.basedir}/target/${release.project}-v${release.version}-windows" failonerror="false"/>
                                         <delete dir="${project.basedir}/target/${release.project}-v${release.version}-mac" failonerror="false"/>
